@@ -116,7 +116,7 @@ install.packages(c("ggplot2", "dplyr", "tidyr", "corrplot"))
 
 1. Clone the repository:
 ```bash
-git clone https://github.com/yourusername/data-science-visualization-eda.git
+git clone https://github.com/swaroop201/data-science-visualization-eda.git
 ```
 
 2. Navigate to the project directory:
