@@ -1,0 +1,251 @@
+---
+title: "Homework_1"
+author: "Group "
+date: "2024-09-24"
+output: word_document
+---
+
+```{r region}
+# Load necessary libraries
+library(tidyverse)
+library(corrplot)
+
+# Load the data
+data <- read.csv("region_12 1 (1).csv")
+head(data)
+```
+
+## Including Plots
+
+```{r }
+# Check for missing values
+colSums(is.na(data))
+```
+```{r}
+# Dropping columns with more than 75% missing data
+threshold <- nrow(data) * 0.75
+data_cleaned <- data %>%
+  select_if(~ sum(is.na(.)) < threshold)
+```
+
+```{r}
+# Descriptive statistics
+summary(data_cleaned)
+```
+
+```{r}
+# Assuming data_cleaned is the cleaned version of your dataset
+numeric_columns <- data_cleaned %>%
+  select(where(is.numeric))  # Select only numeric columns
+
+```
+
+```{r}
+# Identify columns with zero standard deviation
+zero_sd_cols <- sapply(numeric_columns, function(x) sd(x, na.rm = TRUE) == 0)
+
+# Display the names of the columns that have zero standard deviation
+names(zero_sd_cols[zero_sd_cols == TRUE])
+
+```
+
+```{r}
+# Remove columns with zero standard deviation
+numeric_columns_clean <- numeric_columns %>%
+  select(where(~ sd(., na.rm = TRUE) != 0))
+
+# Check the cleaned numeric columns
+head(numeric_columns_clean)
+
+
+```
+```{r}
+# Compute the correlation matrix
+cor_matrix <- cor(numeric_columns_clean, use = "complete.obs")
+
+# Print the correlation matrix
+print(cor_matrix)
+
+```
+```{r}
+# Descriptive statistics
+summary(numeric_columns_clean)
+
+```
+
+
+
+```{r}
+# Plot histograms for numeric columns
+numeric_columns_clean %>%
+  gather() %>%
+  ggplot(aes(value)) +
+  geom_histogram(bins = 20, fill = "blue", alpha = 0.7) +
+  facet_wrap(~key, scales = "free_x") +
+  labs(title = "Distribution of Numerical Variables")
+
+
+```
+
+
+```{r}
+# Plot detailed correlation heatmap
+corrplot(cor_matrix, method = "color", type = "lower", 
+         addCoef.col = "black", number.cex = 0.7, tl.cex = 0.8)
+
+```
+
+
+```{r}
+
+# Boxplot to detect outliers in the numeric columns
+numeric_columns_clean %>%
+  gather(key = "variable", value = "value") %>%
+  ggplot(aes(x = variable, y = value)) +
+  geom_boxplot(fill = "lightblue") +
+  coord_flip() +
+  labs(title = "Box Plots of Numeric Variables")
+
+
+```
+
+```{r}
+# Pair Plot (scatter matrix) for the numeric columns
+library(GGally)
+ggpairs(numeric_columns_clean)
+```
+
+
+Categorical Variable Analysis
+```{r}
+# Identify categorical variables (factors or character types)
+categorical_columns <- data_cleaned %>%
+  select(where(is.character) | where(is.factor))
+
+# View the categorical columns
+head(categorical_columns)
+
+```
+
+```{r}
+# Bar plot for the categorical column "country_txt"
+ggplot(data_cleaned, aes(x = country)) +
+  geom_bar(fill = "lightblue") +
+  labs(title = "Number of Entries per Country", x = "country", y = "Count") +
+  theme_minimal() +
+  coord_flip()  # Optional: Flip for readability
+
+
+```
+Insights: The bar plot shows a clear imbalance in the number of entries per country, with Australia and Papua New Guinea dominating the dataset. Australia has the highest representation, with around 125 entries, followed by Papua New Guinea with about 100. New Caledonia and New Zealand also have a moderate presence, but countries like Wallis and Futuna, Vanuatu, New Hebrides, and French Polynesia are minimally represented, with very few entries. Fiji and Solomon Islands fall in between, with slightly more occurrences than the least represented countries. The distribution is highly skewed, indicating that the dataset focuses primarily on a few countries, particularly Australia and Papua New Guinea, while providing significantly less data for other regions. This concentration suggests that any analysis of trends or patterns in the dataset may heavily reflect the conditions of these dominant countries, with less reliable insights for the underrepresented ones.
+
+
+Bar plot for the categorical column "Target"
+
+```{r}
+# Bar plot for the categorical column "Target"
+ggplot(data_cleaned, aes(x = target)) +
+  geom_bar(fill = "lightblue") +
+  labs(title = "Number of Entries per Target Type", x = "Target", y = "Count") +
+  theme_minimal() +
+  coord_flip()  # Optional: Flip for readability
+  
+
+```
+Insights: The bar plot shows that Business and Airports & Aircraft are the most frequently targeted, each with around 60 to 70 entries. Other moderately targeted categories include Government (General), Private Citizens & Property, and Religious Figures/Institutions, each with 40 to 50 entries. Less frequently targeted groups include Tourists, Journalists & Media, and Food or Water Supply, which have significantly fewer entries. This indicates a concentration of events on business and transportation sectors, while other target types are less commonly represented in the dataset.
+
+
+Numeric vs Numeric: Scatter Plots, Correlation, Joint Distribution
+Example with killed (number of kills) and wounded (number of wounded):
+
+
+```{r}
+
+# Load necessary libraries
+library(ggplot2)
+
+# Scatter plot between two numeric variables: killed vs wounded
+ggplot(data_cleaned, aes(x = killed, y = wounded)) +
+  geom_point(alpha = 0.5, color = "blue") +
+  labs(title = "Scatter Plot of Number of Kills vs Number of Wounded", x = "Number of Kills", y = "Number of Wounded") +
+  theme_minimal()
+
+# Correlation between killed and wounded
+correlation_value <- cor(data_cleaned$killed, data_cleaned$wounded, use = "complete.obs")
+print(paste("Correlation between Number of Kills and Number of Wounded: ", correlation_value))
+
+
+```
+
+Insights: The correlation coefficient of 0.54 suggests a moderate positive correlation between the two variables, meaning that as the number of kills increases, the number of wounded also tends to increase, though the relationship is not very strong. Overall, while higher numbers of kills generally correspond with higher numbers of wounded, the majority of incidents involve relatively low casualties.
+
+
+
+Categorical vs Numeric: Box Plots, Violin Plots
+
+
+```{r}
+
+# Box plot to compare number of kills (killed) by Type of Attack (Type.of.Attack)
+ggplot(data_cleaned, aes(x = `Type.of.Attack`, y = killed)) +
+  geom_boxplot(fill = "lightblue") +
+  labs(title = "Number of Kills by Type of Attack", x = "Type of Attack", y = "Number of Kills") +
+  theme_minimal() +
+  coord_flip()  # Flip for better readability
+
+# Violin plot to visualize distribution of kills (killed) by Type of Attack (Type.of.Attack)
+ggplot(data_cleaned, aes(x = `Type.of.Attack`, y = killed)) +
+  geom_violin(fill = "lightgreen") +
+  labs(title = "Violin Plot of Number of Kills by Type of Attack", x = "Type of Attack", y = "Number of Kills") +
+  theme_minimal() +
+  coord_flip()  # Flip for readability
+
+
+```
+
+Insights: The violin and box plots provide a comparison of the number of kills across different types of attacks. The Armed Assault shows the widest range, including the highest number of kills, with outliers extending beyond 40 kills. Bombing/Explosion and Facility/Infrastructure Attack also have notable ranges but with fewer extreme outliers compared to Armed Assault. Most other attack types, including Unarmed Assault and Hostage Taking, show very low counts of kills with minimal variation. The Hostage Taking (Barricade Incident) appears to have a tightly packed distribution, indicating little variation in the number of kills for that attack type. Overall, Armed Assault stands out as the most lethal attack type with the highest number of kills and the greatest variability.
+
+
+
+Categorical vs Categorical: Stacked Bar Plots, Contingency
+
+```{r}
+# Stacked bar plot to compare Type of Attack and Weapon Type
+ggplot(data_cleaned, aes(x = `Type.of.Attack`, fill = `weapon.type`)) +
+  geom_bar(position = "stack") +
+  labs(title = "Stacked Bar Plot of Type of Attack and Weapon Type", x = "Type of Attack", y = "Count") +
+  theme_minimal() +
+  coord_flip()  # Flip the chart for better readability
+```
+Insights:
+The stacked bar plot highlights that Armed Assault and Bombing/Explosion are the most common attack types, primarily using Firearms and Explosives, respectively. Explosives dominate Bombing/Explosion incidents, while Firearms are heavily used in Armed Assaults. Other attack types, such as Facility/Infrastructure Attack and Assassination, show a more varied but less frequent use of weapon types. Overall, the plot shows a strong link between these common attack types and specific weapon types, with a clear concentration on explosives and firearms.
+
+
+
+```{r}
+
+# Contingency table between Type of Attack and Weapon Type
+attack_weapon_table <- table(data_cleaned$`Type.of.Attack`, data_cleaned$`weapon.type`)
+
+# Print the contingency table
+print(attack_weapon_table)
+
+```
+ANOVA Test:
+
+```{r}
+# ANOVA to check the relationship between kills and attack type
+anova_result <- aov(killed ~ `Type.of.Attack`, data = data_cleaned)
+summary(anova_result)
+
+```
+
+Insights:
+F value = 3.689, Pr(>F) = 0.000395: This suggests that the variation between the groups (attack types) is statistically significant, with a p-value well below 0.05, indicating a significant effect of the attack type on the number of kills.
+
+Type.of.Attack has a significant effect on the number of kills, as indicated by the small p-value (0.000395), suggesting that the type of attack has a measurable impact on the outcome (number of kills).
+
+Conculsion:
+The ANOVA results further show that the type of attack significantly affects the number of kills, reinforcing the idea that attack methods have a substantial impact on the lethality of incidents.
+
+
